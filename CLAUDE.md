@@ -13,7 +13,7 @@ This file documents the project structure, conventions, and workflows for AI ass
 
 ## Repository State
 
-> **Note:** As of 2026-03-12, this repository contains no source code. The sections below describe conventions and expected structure to be applied once development begins.
+> **Updated:** As of 2026-03-12, the project is a single-file static HTML CV/SPA deployed via GitHub Pages.
 
 ---
 
@@ -45,50 +45,26 @@ git push -u origin <branch-name>
 
 ---
 
-## Expected Project Structure
+## Project Structure
 
-Since this is a CV/resume project, the structure will depend on the chosen technology. Common patterns:
-
-### Static HTML/CSS
+Single-file static HTML SPA, deployed via GitHub Pages from the `master` branch root.
 
 ```
 mon-cv/
 ├── CLAUDE.md
-├── index.html          # Main resume page
-├── css/
-│   └── style.css
-├── assets/
-│   ├── images/
-│   └── fonts/
-└── README.md
+└── index.html          # Single-page CV application (all HTML/CSS/JS inline)
 ```
 
-### Framework-based (e.g., Next.js, Astro, Nuxt)
+### Stack
 
-```
-mon-cv/
-├── CLAUDE.md
-├── package.json
-├── src/
-│   ├── components/
-│   ├── pages/ (or app/)
-│   └── styles/
-├── public/
-└── README.md
-```
+- **Layout**: Tailwind CSS (CDN) — responsive sidebar/bottom-nav layout
+- **Chart**: Chart.js (CDN) — radar chart for skills visualization
+- **JS**: Vanilla JavaScript — tab navigation + master-detail experience panel
+- **Hosting**: GitHub Pages (`master` branch, root directory)
 
-### JSON/Markdown data-driven
+### Deployment
 
-```
-mon-cv/
-├── CLAUDE.md
-├── data/
-│   └── resume.json     # Structured resume data (e.g., JSON Resume schema)
-├── templates/
-└── output/
-```
-
-Update this section once the actual structure is established.
+The site is served via GitHub Pages. To update the live site, merge changes into `master`.
 
 ---
 
@@ -116,20 +92,14 @@ These are sensible defaults — override them in this file once the actual stack
 
 ## Common Commands
 
-Update this section with real commands once the stack is chosen.
+No build step required — the project is a static HTML file.
 
 ```bash
-# Install dependencies (if applicable)
-npm install
+# Preview locally (Python)
+python3 -m http.server 8080
 
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Run linter
-npm run lint
+# Or with Node
+npx serve .
 ```
 
 ---
