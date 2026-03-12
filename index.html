@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frédéric Mailhé - Profil Interactif A-Commerce</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Chosen Palette: Warm Neutrals & Professional Indigo -->
+    <!-- Application Structure Plan: The SPA uses a "Dashboard" layout with a sidebar (or bottom bar on mobile) for navigation. This structure was chosen because it allows recruiters or clients to quickly access specific facets of the profile (Overview, Skills, Experience, Education) without endless scrolling. The 'Skills' section uses an interactive radar chart to visually communicate the hybrid nature of the profile (Tech + Business). The 'Experience' section uses a master-detail pattern, allowing users to click a role to explore its specific achievements, which is highly effective for detailed reading. -->
+    <!-- Visualization & Content Choices:
+        1. Profile Overview -> Goal: Quick impression -> Viz: Key stats metrics -> Interaction: Hover effects -> Justification: Immediate credibility. -> Library: Tailwind HTML/CSS.
+        2. Core Skills -> Goal: Compare proficiencies -> Viz: Radar Chart -> Interaction: Hover for exact values -> Justification: Best way to show a multi-disciplinary profile (Agile, IA, Data) -> Library: Chart.js (NO SVG/Mermaid).
+        3. Experience -> Goal: Detailed exploration -> Viz: Master-Detail List -> Interaction: Click list item to update details pane -> Justification: Keeps the UI clean while offering deep dives into complex roles like Kelkoo or Neural Web -> Library: Vanilla JS + Tailwind.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        /* Base styling and custom utilities */
+        body {
+            background-color: #f8fafc; /* slate-50 */
+            color: #1e293b; /* slate-800 */
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* Chart Container Requirements */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+
+        @media (max-width: 640px) {
+            .chart-container {
+                height: 280px;
+            }
+        }
+
+        /* Hide scrollbar for clean look */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Smooth transitions */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom Unicode Icon Styling */
+        .u-icon {
+            font-size: 1.25rem;
+            line-height: 1;
+        }
+    </style>
+</head>
+<body class="h-screen w-full overflow-hidden flex flex-col md:flex-row bg-slate-50 text-slate-800">
+
+    <!-- Navigation Sidebar -->
+    <nav class="bg-indigo-900 text-white w-full md:w-64 flex-shrink-0 md:h-full flex flex-row md:flex-col justify-between md:justify-start shadow-xl z-20 overflow-x-auto no-scrollbar border-b md:border-b-0 md:border-r border-indigo-800">
+        <div class="p-4 md:p-6 flex-shrink-0 flex items-center md:block">
+            <div class="hidden md:flex items-center justify-center w-20 h-20 rounded-full bg-indigo-700 text-3xl mb-4 border-2 border-indigo-400 shadow-inner">
+                👤
+            </div>
+            <div>
+                <h1 class="text-lg md:text-xl font-bold tracking-wide">F. Mailhé</h1>
+                <p class="text-indigo-300 text-xs md:text-sm mt-1 uppercase tracking-wider font-semibold">PO / Expert IA</p>
+            </div>
+        </div>
+
+        <div class="flex flex-row md:flex-col w-full px-2 md:px-0 md:mt-4 space-x-2 md:space-x-0 md:space-y-1 overflow-x-auto no-scrollbar pb-2 md:pb-0">
+            <button onclick="switchTab('profil')" id="btn-profil" class="nav-btn w-full text-left px-4 py-3 md:py-4 hover:bg-indigo-800 transition-colors rounded-lg md:rounded-none flex items-center space-x-3 bg-indigo-800 border-l-4 border-indigo-400">
+                <span class="u-icon">🏠</span><span class="font-medium whitespace-nowrap">Vue d'ensemble</span>
+            </button>
+            <button onclick="switchTab('competences')" id="btn-competences" class="nav-btn w-full text-left px-4 py-3 md:py-4 hover:bg-indigo-800 transition-colors rounded-lg md:rounded-none flex items-center space-x-3 border-l-4 border-transparent">
+                <span class="u-icon">⚡</span><span class="font-medium whitespace-nowrap">Compétences</span>
+            </button>
+            <button onclick="switchTab('experiences')" id="btn-experiences" class="nav-btn w-full text-left px-4 py-3 md:py-4 hover:bg-indigo-800 transition-colors rounded-lg md:rounded-none flex items-center space-x-3 border-l-4 border-transparent">
+                <span class="u-icon">💼</span><span class="font-medium whitespace-nowrap">Expériences</span>
+            </button>
+            <button onclick="switchTab('formation')" id="btn-formation" class="nav-btn w-full text-left px-4 py-3 md:py-4 hover:bg-indigo-800 transition-colors rounded-lg md:rounded-none flex items-center space-x-3 border-l-4 border-transparent">
+                <span class="u-icon">🎓</span><span class="font-medium whitespace-nowrap">Formation & Infos</span>
+            </button>
+        </div>
+
+        <div class="hidden md:block mt-auto p-6 text-xs text-indigo-400">
+            <p>Dispo: 1er Avril</p>
+            <p>Full Remote / Aix</p>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 h-full overflow-y-auto bg-slate-50 relative p-4 md:p-8 lg:p-12">
+
+        <!-- SECTION 1: PROFIL -->
+        <section id="profil" class="tab-content active max-w-5xl mx-auto">
+            <div class="mb-8">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-2">Frédéric Mailhé</h2>
+                <h3 class="text-xl md:text-2xl text-indigo-600 font-medium">Product Owner · Scrum Master · Expert IA, GEO & A-Commerce</h3>
+            </div>
+
+            <p class="text-sm text-slate-500 mb-6 italic border-l-4 border-indigo-300 pl-4 py-1">
+                Cette section offre une vision macro de mon profil. Elle synthétise 20 ans d'expertise digitale, mettant en exergue ma transition stratégique vers l'A-Commerce et l'architecture IA.
+            </p>
+
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8 mb-8">
+                <h4 class="text-lg font-bold text-slate-800 mb-4 uppercase tracking-wider flex items-center"><span class="mr-2">🎯</span> Résumé Exécutif</h4>
+                <p class="text-slate-600 leading-relaxed text-lg">
+                    Product Owner certifié (CSPO) spécialisé dans le <strong class="text-indigo-700">A-Commerce</strong> (IA + Commerce). Expert dans l'utilisation de <strong class="text-indigo-700">Claude Code</strong> et du protocole <strong class="text-indigo-700">MCP</strong> pour le pilotage de produits innovants (Chatbots, Automatisation, Data Géo). Fort de 20 ans d'expérience dans les produits digitaux, j'allie rigueur agile et innovation technologique.
+                </p>
+            </div>
+
+            <!-- Key Metrics Dashboard -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 text-center hover:shadow-md transition-shadow">
+                    <div class="text-3xl font-black text-indigo-600 mb-1">20</div>
+                    <div class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Ans d'Expérience</div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 text-center hover:shadow-md transition-shadow">
+                    <div class="text-3xl font-black text-indigo-600 mb-1">39+</div>
+                    <div class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Pays Déployés</div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 text-center hover:shadow-md transition-shadow">
+                    <div class="text-3xl font-black text-indigo-600 mb-1">MCP</div>
+                    <div class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Protocole Maîtrisé</div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 text-center hover:shadow-md transition-shadow">
+                    <div class="text-3xl font-black text-indigo-600 mb-1">CSPO</div>
+                    <div class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Certifié Agile</div>
+                </div>
+            </div>
+
+            <!-- Contact Row -->
+            <div class="flex flex-wrap gap-3">
+                <a href="mailto:fred.mailhe@gmail.com" class="inline-flex items-center bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-full text-sm font-medium transition-colors">
+                    <span class="mr-2">✉️</span> fred.mailhe@gmail.com
+                </a>
+                <span class="inline-flex items-center bg-slate-200 text-slate-700 px-4 py-2 rounded-full text-sm font-medium">
+                    <span class="mr-2">📞</span> 06 49 24 65 34
+                </span>
+                <span class="inline-flex items-center bg-slate-200 text-slate-700 px-4 py-2 rounded-full text-sm font-medium">
+                    <span class="mr-2">📍</span> Sud-Isère / Full Remote
+                </span>
+            </div>
+        </section>
+
+        <!-- SECTION 2: COMPETENCES -->
+        <section id="competences" class="tab-content max-w-5xl mx-auto">
+            <div class="mb-8">
+                <h2 class="text-3xl font-extrabold text-slate-900">Cartographie des Compétences</h2>
+            </div>
+
+            <p class="text-sm text-slate-500 mb-6 italic border-l-4 border-indigo-300 pl-4 py-1">
+                Explorez visuellement la répartition de mon expertise. Le graphique radar démontre ma polyvalence entre gestion produit, technique et stratégie business. Cliquez sur les catégories ci-dessous pour voir les détails.
+            </p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+
+                <!-- Chart Area -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6">
+                    <h3 class="text-center text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">Profil d'Expertise</h3>
+                    <div class="chart-container">
+                        <canvas id="skillsChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Interactive Skills List -->
+                <div class="space-y-4">
+                    <div class="bg-white rounded-xl shadow-sm border border-indigo-200 overflow-hidden">
+                        <div class="bg-indigo-50 px-4 py-3 border-b border-indigo-100">
+                            <h4 class="font-bold text-indigo-900 flex items-center"><span class="mr-2">🤖</span> IA & MCP</h4>
+                        </div>
+                        <div class="p-4 text-slate-600 text-sm leading-relaxed">
+                            <strong class="text-slate-800">Claude Code (expert)</strong>, OpenAI API, implémentation de serveurs <strong class="text-slate-800">MCP</strong> (Model Context Protocol), Prompt Engineering, création d'Agents conversationnels.
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50 px-4 py-3 border-b border-slate-200">
+                            <h4 class="font-bold text-slate-800 flex items-center"><span class="mr-2">🗺️</span> GEO / Data</h4>
+                        </div>
+                        <div class="p-4 text-slate-600 text-sm leading-relaxed">
+                            Analyse spatiale avec <strong class="text-slate-800">PostGIS</strong> & PostgreSQL, exploitation massive de données DVF (Demande de Valeurs Foncières), visualisations géographiques.
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50 px-4 py-3 border-b border-slate-200">
+                            <h4 class="font-bold text-slate-800 flex items-center"><span class="mr-2">🔄</span> Agile & Produit</h4>
+                        </div>
+                        <div class="p-4 text-slate-600 text-sm leading-relaxed">
+                            <strong class="text-slate-800">Product Owner</strong> (Backlog, Roadmap, Discovery) & <strong class="text-slate-800">Scrum Master</strong> (Facilitation, Delivery). Orienté valeur utilisateur et time-to-market.
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50 px-4 py-3 border-b border-slate-200">
+                            <h4 class="font-bold text-slate-800 flex items-center"><span class="mr-2">⚙️</span> Automation & Business</h4>
+                        </div>
+                        <div class="p-4 text-slate-600 text-sm leading-relaxed">
+                            Workflows complexes avec <strong class="text-slate-800">n8n</strong> et Make pour l'A-Commerce et le SEO. 20 ans d'expérience e-commerce (Kelkoo), framework de comparaison, outils marchands.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: EXPERIENCES -->
+        <section id="experiences" class="tab-content max-w-5xl mx-auto h-full flex flex-col">
+            <div class="mb-6 flex-shrink-0">
+                <h2 class="text-3xl font-extrabold text-slate-900">Parcours Professionnel</h2>
+            </div>
+
+            <p class="text-sm text-slate-500 mb-6 italic border-l-4 border-indigo-300 pl-4 py-1 flex-shrink-0">
+                L'historique détaillé de mes missions. L'interface "Maître-Détails" permet de parcourir la chronologie à gauche et d'approfondir les réalisations clés (comme le projet Morphai ou le moteur DVF) à droite.
+            </p>
+
+            <div class="flex flex-col md:flex-row gap-6 flex-1 min-h-[500px]">
+
+                <!-- Master List -->
+                <div class="w-full md:w-1/3 flex flex-col space-y-3">
+                    <button onclick="selectExperience('neural')" id="exp-neural" class="exp-btn text-left p-4 rounded-xl border-2 border-indigo-500 bg-indigo-50 transition-all focus:outline-none shadow-sm relative overflow-hidden">
+                        <div class="text-xs font-bold text-indigo-500 mb-1">2024 – Présent</div>
+                        <div class="font-bold text-slate-800 leading-tight mb-1">Formation IA & PM</div>
+                        <div class="text-sm text-slate-600">Neural Web / Neural Artistry</div>
+                    </button>
+
+                    <button onclick="selectExperience('iad')" id="exp-iad" class="exp-btn text-left p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-indigo-300 transition-all focus:outline-none shadow-sm">
+                        <div class="text-xs font-bold text-slate-400 mb-1">2025 – Présent</div>
+                        <div class="font-bold text-slate-800 leading-tight mb-1">Conseiller Immobilier IA</div>
+                        <div class="text-sm text-slate-600">iad France</div>
+                    </button>
+
+                    <button onclick="selectExperience('kelkoo')" id="exp-kelkoo" class="exp-btn text-left p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-indigo-300 transition-all focus:outline-none shadow-sm">
+                        <div class="text-xs font-bold text-slate-400 mb-1">2015 – 2024</div>
+                        <div class="font-bold text-slate-800 leading-tight mb-1">Product Owner</div>
+                        <div class="text-sm text-slate-600">Kelkoo Group</div>
+                    </button>
+
+                    <button onclick="selectExperience('prev')" id="exp-prev" class="exp-btn text-left p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-indigo-300 transition-all focus:outline-none shadow-sm">
+                        <div class="text-xs font-bold text-slate-400 mb-1">2000 – 2015</div>
+                        <div class="font-bold text-slate-800 leading-tight mb-1">Développeur & Tech Lead</div>
+                        <div class="text-sm text-slate-600">Agences E-commerce</div>
+                    </button>
+                </div>
+
+                <!-- Detail View -->
+                <div class="w-full md:w-2/3 bg-white rounded-xl shadow-md border border-slate-200 p-6 md:p-8 flex flex-col">
+                    <div id="exp-detail-header" class="mb-6 border-b border-slate-100 pb-6">
+                        <h3 id="det-title" class="text-2xl font-bold text-slate-900 mb-2">Formation IA & Product Management</h3>
+                        <div class="flex items-center text-indigo-600 font-medium">
+                            <span id="det-company" class="mr-4">Neural Web / Neural Artistry</span>
+                            <span id="det-date" class="text-slate-500 text-sm bg-slate-100 px-3 py-1 rounded-full">2024 – Présent</span>
+                        </div>
+                    </div>
+
+                    <div id="det-content" class="text-slate-600 leading-relaxed space-y-4 flex-1 overflow-y-auto pr-2 no-scrollbar">
+                        <p class="font-medium text-slate-800">Expertise en IA appliquée et architectures d'agents.</p>
+                        <ul class="space-y-3">
+                            <li class="flex items-start">
+                                <span class="text-indigo-500 mr-2 mt-1">▸</span>
+                                <div><strong>IA & MCP :</strong> Utilisation quotidienne de Claude Code et expérimentations sur le protocole MCP pour connecter les LLM aux bases de données locales.</div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-indigo-500 mr-2 mt-1">▸</span>
+                                <div><strong>Projet Morphai :</strong> Pilotage d'un produit IA de classification multilingue (MVP en 7 semaines).</div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-indigo-500 mr-2 mt-1">▸</span>
+                                <div><strong>Expertise GEO :</strong> Architecture SQL/PostGIS pour l'analyse du marché immobilier via les données DVF.</div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-indigo-500 mr-2 mt-1">▸</span>
+                                <div><strong>A-Commerce :</strong> Automatisation de tunnels de vente via OpenAI, Midjourney et WooCommerce.</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: FORMATION & INFOS -->
+        <section id="formation" class="tab-content max-w-5xl mx-auto">
+            <div class="mb-8">
+                <h2 class="text-3xl font-extrabold text-slate-900">Formation & Informations Pratiques</h2>
+            </div>
+
+            <p class="text-sm text-slate-500 mb-8 italic border-l-4 border-indigo-300 pl-4 py-1">
+                La validation institutionnelle de mes acquis (agilité et IA) ainsi que mes modalités de collaboration.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+                <!-- Certifications -->
+                <div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center border-b border-slate-200 pb-2"><span class="mr-2">📜</span> Certifications & Diplômes</h3>
+                    <div class="space-y-4">
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-start">
+                            <div class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-md text-sm font-bold mr-4 mt-1">2025</div>
+                            <div>
+                                <h4 class="font-bold text-slate-900">Certified Scrum Product Owner® (CSPO)</h4>
+                                <p class="text-slate-500 text-sm">Scrum Alliance</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-start">
+                            <div class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-md text-sm font-bold mr-4 mt-1">2025</div>
+                            <div>
+                                <h4 class="font-bold text-slate-900">Certification Gestion de projet agile</h4>
+                                <p class="text-slate-500 text-sm">RS5487</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-start">
+                            <div class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-md text-sm font-bold mr-4 mt-1">2024</div>
+                            <div>
+                                <h4 class="font-bold text-slate-900">Programme Consulting IA</h4>
+                                <p class="text-slate-500 text-sm">Alyra (Cadrage & Architecture IA)</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-start">
+                            <div class="bg-slate-100 text-slate-500 px-3 py-1 rounded-md text-sm font-bold mr-4 mt-1">Ancien</div>
+                            <div>
+                                <h4 class="font-bold text-slate-900">BTS Informatique de gestion</h4>
+                                <p class="text-slate-500 text-sm">Analyste programmeur (AFPA)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Practical Info -->
+                <div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center border-b border-slate-200 pb-2"><span class="mr-2">ℹ️</span> Informations Complémentaires</h3>
+
+                    <div class="bg-indigo-900 text-white p-6 rounded-xl shadow-md mb-6 relative overflow-hidden">
+                        <!-- Decorative element -->
+                        <div class="absolute -right-6 -top-6 text-6xl opacity-10">🚀</div>
+
+                        <h4 class="text-lg font-bold text-indigo-200 mb-4 uppercase tracking-wide">Modalités de Mission</h4>
+                        <ul class="space-y-4">
+                            <li class="flex items-center">
+                                <span class="text-green-400 mr-3 text-xl">✓</span>
+                                <span class="font-medium text-lg">Disponible au 1er Avril</span>
+                            </li>
+                            <li class="flex items-center">
+                                <span class="text-indigo-300 mr-3 text-xl">✓</span>
+                                <span>Full Remote privilégié</span>
+                            </li>
+                            <li class="flex items-center">
+                                <span class="text-indigo-300 mr-3 text-xl">✓</span>
+                                <span>Mobilité ponctuelle à Aix-en-Provence</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <h4 class="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">Langues</h4>
+                        <div class="flex flex-col space-y-3">
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="font-medium text-slate-800">Français</span>
+                                    <span class="text-xs text-slate-500">Maternel</span>
+                                </div>
+                                <div class="w-full bg-slate-200 rounded-full h-2">
+                                    <div class="bg-indigo-500 h-2 rounded-full" style="width: 100%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="font-medium text-slate-800">Anglais</span>
+                                    <span class="text-xs text-slate-500">Professionnel courant</span>
+                                </div>
+                                <div class="w-full bg-slate-200 rounded-full h-2">
+                                    <div class="bg-indigo-400 h-2 rounded-full" style="width: 80%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Application Logic -->
+    <script>
+        // --- 1. Navigation Logic ---
+        function switchTab(tabId) {
+            // Hide all contents
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            // Reset all nav buttons
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                el.classList.remove('bg-indigo-800', 'border-indigo-400');
+                el.classList.add('border-transparent');
+            });
+
+            // Show selected content
+            document.getElementById(tabId).classList.add('active');
+
+            // Highlight selected button
+            const btn = document.getElementById('btn-' + tabId);
+            btn.classList.add('bg-indigo-800', 'border-indigo-400');
+            btn.classList.remove('border-transparent');
+
+            // Render chart if skills tab is opened
+            if(tabId === 'competences' && !window.chartRendered) {
+                renderChart();
+                window.chartRendered = true;
+            }
+        }
+
+        // --- 2. Chart.js Implementation (Radar Chart) ---
+        function renderChart() {
+            const ctx = document.getElementById('skillsChart').getContext('2d');
+
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: [
+                        'IA, LLM & MCP',
+                        'Data & PostGIS',
+                        'PO & Méthodes Agiles',
+                        'Automation (n8n)',
+                        'E-commerce & Business'
+                    ],
+                    datasets: [{
+                        label: 'Niveau d\'Expertise',
+                        data: [95, 85, 90, 90, 100], // Representational data based on CV
+                        backgroundColor: 'rgba(79, 70, 229, 0.2)', // Indigo-600 with opacity
+                        borderColor: 'rgba(79, 70, 229, 1)',
+                        pointBackgroundColor: 'rgba(79, 70, 229, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(79, 70, 229, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // Critical for container scaling
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(0,0,0,0.05)' },
+                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            pointLabels: {
+                                font: {
+                                    family: "'Segoe UI', sans-serif",
+                                    size: 11,
+                                    weight: 'bold'
+                                },
+                                color: '#475569' // slate-600
+                            },
+                            ticks: {
+                                display: false, // Hide numeric scale for cleaner look
+                                min: 0,
+                                max: 100
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 41, 59, 0.9)', // slate-800
+                            titleFont: { size: 13 },
+                            bodyFont: { size: 13 },
+                            padding: 10,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ' : Forte Expertise';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- 3. Experience Master-Detail Logic ---
+        const experienceData = {
+            'neural': {
+                title: 'Formation IA & Product Management',
+                company: 'Neural Web / Neural Artistry',
+                date: '2024 – Présent',
+                intro: 'Expertise en IA appliquée et architectures d\'agents.',
+                bullets: [
+                    '<strong>IA & MCP :</strong> Utilisation quotidienne de Claude Code et expérimentations sur le protocole MCP pour connecter les LLM aux bases de données locales.',
+                    '<strong>Projet Morphai :</strong> Pilotage d\'un produit IA de classification multilingue (MVP en 7 semaines).',
+                    '<strong>Expertise GEO :</strong> Architecture SQL/PostGIS pour l\'analyse du marché immobilier via les données DVF.',
+                    '<strong>A-Commerce :</strong> Automatisation de tunnels de vente via OpenAI, Midjourney et WooCommerce.'
+                ]
+            },
+            'iad': {
+                title: 'Conseiller Immobilier Indépendant',
+                company: 'iad France',
+                date: '2025 – Présent',
+                intro: 'Mise en application concrète de la stack technologique sur le marché.',
+                bullets: [
+                    'Mise en application de la stack IA/GEO sur le cycle de vente réel.',
+                    'Réalisation de 3 ventes en moins d\'1 mois grâce à l\'optimisation des process.',
+                    'Développement d\'outils internes pour l\'estimation immobilière.'
+                ]
+            },
+            'kelkoo': {
+                title: 'Product Owner',
+                company: 'Kelkoo Group',
+                date: '2015 – 2024',
+                intro: 'Pilotage de la plateforme internationale de comparaison de prix (E-commerce).',
+                bullets: [
+                    'Gestion d\'un backlog Scrum massif pour des comparateurs dans 39+ pays.',
+                    'Coordination entre les équipes Tech, Data et Business.',
+                    'Transformation des besoins marchands en solutions de mise en avant produits.',
+                    'Travail en environnement technique complexe à forte volumétrie.'
+                ]
+            },
+            'prev': {
+                title: 'Développeur & Responsable Technique',
+                company: 'Agences E-commerce',
+                date: '2000 – 2015',
+                intro: 'Quinze années d\'expérience fondatrices dans le web.',
+                bullets: [
+                    'Développement Web full-stack et intégration e-commerce.',
+                    'Responsabilité technique garantissant une compréhension profonde des contraintes de développement.',
+                    'Gestion de projets digitaux et relation client.'
+                ]
+            }
+        };
+
+        function selectExperience(id) {
+            // Update UI buttons
+            document.querySelectorAll('.exp-btn').forEach(el => {
+                el.classList.remove('border-indigo-500', 'bg-indigo-50');
+                el.classList.add('border-slate-200', 'bg-white');
+            });
+            const selectedBtn = document.getElementById('exp-' + id);
+            selectedBtn.classList.remove('border-slate-200', 'bg-white');
+            selectedBtn.classList.add('border-indigo-500', 'bg-indigo-50');
+
+            // Update content data
+            const data = experienceData[id];
+            document.getElementById('det-title').textContent = data.title;
+            document.getElementById('det-company').textContent = data.company;
+            document.getElementById('det-date').textContent = data.date;
+
+            // Build bullets HTML
+            let bulletsHtml = `<p class="font-medium text-slate-800">${data.intro}</p><ul class="space-y-3">`;
+            data.bullets.forEach(bullet => {
+                bulletsHtml += `
+                    <li class="flex items-start">
+                        <span class="text-indigo-500 mr-2 mt-1">▸</span>
+                        <div>${bullet}</div>
+                    </li>`;
+            });
+            bulletsHtml += '</ul>';
+
+            // Add a simple fade effect
+            const contentEl = document.getElementById('det-content');
+            contentEl.style.opacity = '0';
+            setTimeout(() => {
+                contentEl.innerHTML = bulletsHtml;
+                contentEl.style.opacity = '1';
+                contentEl.style.transition = 'opacity 0.3s ease-in-out';
+            }, 150);
+        }
+
+        // Initialize state
+        window.chartRendered = false;
+
+    </script>
+</body>
+</html>
